@@ -70,6 +70,14 @@ install_system_packages() {
 
     apt-get update -qq
 
+    sudo apt install software-properties-common -y
+
+    # 2. Add deadsnakes PPA
+    sudo add-apt-repository ppa:deadsnakes/ppa -y
+
+    # 3. Update package list
+    sudo apt update
+
     # PostgreSQL 16
     if ! command -v psql &>/dev/null || [[ $(psql --version | grep -oP '\d+' | head -1) -lt 16 ]]; then
         info "Ajout du dépôt PostgreSQL 16..."
