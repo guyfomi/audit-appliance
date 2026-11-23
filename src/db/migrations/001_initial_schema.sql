@@ -269,6 +269,24 @@ CREATE TABLE audit_event_risk_detail (
 
 CREATE INDEX idx_risk_detail_event ON audit_event_risk_detail (event_id);
 
+-- ── Utilisateurs de l'appliance ───────────────────────────────────────────────
+
+CREATE TABLE appliance_user (
+    id               SERIAL PRIMARY KEY,
+    username         TEXT        NOT NULL UNIQUE,
+    email            TEXT        NOT NULL,
+    full_name        TEXT,
+    password_hash    TEXT        NOT NULL,
+    role             appliance_role NOT NULL DEFAULT 'READONLY',
+    is_active        BOOL        NOT NULL DEFAULT TRUE,
+    mfa_secret       TEXT,
+    last_login_at    TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON COLUMN appliance_user.password_hash IS 'bcrypt hash — jamais exposé par l''API';
+COMMENT ON COLUMN appliance_user.mfa_secret    IS 'Base32 TOTP secret — chiffré en transit';
+
 CREATE TABLE audit_alert (
     id               BIGSERIAL PRIMARY KEY,
     event_id         BIGINT      NOT NULL,
@@ -325,24 +343,6 @@ CREATE TABLE audit_integrity_checkpoint (
     verified_at      TIMESTAMPTZ,
     verified_ok      BOOL
 );
-
--- ── Utilisateurs de l'appliance ───────────────────────────────────────────────
-
-CREATE TABLE appliance_user (
-    id               SERIAL PRIMARY KEY,
-    username         TEXT        NOT NULL UNIQUE,
-    email            TEXT        NOT NULL,
-    full_name        TEXT,
-    password_hash    TEXT        NOT NULL,
-    role             appliance_role NOT NULL DEFAULT 'READONLY',
-    is_active        BOOL        NOT NULL DEFAULT TRUE,
-    mfa_secret       TEXT,
-    last_login_at    TIMESTAMPTZ,
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-COMMENT ON COLUMN appliance_user.password_hash IS 'bcrypt hash — jamais exposé par l''API';
-COMMENT ON COLUMN appliance_user.mfa_secret    IS 'Base32 TOTP secret — chiffré en transit';
 
 CREATE TABLE admin_audit_event (
     id               BIGSERIAL PRIMARY KEY,
