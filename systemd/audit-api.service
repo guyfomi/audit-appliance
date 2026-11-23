@@ -1,0 +1,43 @@
+[Unit]
+Description=Oracle Data Audit & Forensics — REST API (FastAPI/Uvicorn)
+Documentation=file:///opt/audit-appliance/docs/API.md
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=exec
+User=audit
+Group=audit
+WorkingDirectory=/opt/audit-appliance
+
+ExecStart=/opt/audit-appliance/venv/bin/uvicorn api.main:app \
+    --host 127.0.0.1 \
+    --port 8000 \
+    --workers 2 \
+    --no-access-log \
+    --log-config /opt/audit-appliance/config/uvicorn-log.json
+
+Restart=on-failure
+RestartSec=5
+StartLimitInterval=120
+StartLimitBurst=5
+
+Environment=PYTHONPATH=/opt/audit-appliance/src
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/opt/audit-appliance/config/appliance.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=audit-api
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/audit-appliance
+ReadWritePaths=/opt/audit-appliance/logs
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

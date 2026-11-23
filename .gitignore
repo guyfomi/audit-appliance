@@ -1,0 +1,73 @@
+# =============================================================================
+# Oracle Data Audit & Forensics Appliance — .gitignore
+# =============================================================================
+
+# ── Secrets — JAMAIS committer ────────────────────────────────────────────────
+config/appliance.env
+config/.oracle_secrets
+config/.pg_credentials
+config/.pgpass
+config/.backup_key
+config/.smtp_credentials
+ssl/cert.pem
+ssl/key.pem
+*.enc
+*.secret
+*.key
+*.pem
+!requirements*.txt
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+pip-log.txt
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# ── Node / React UI ───────────────────────────────────────────────────────────
+ui/node_modules/
+ui/dist/
+ui/.env.local
+ui/.env.production
+
+# ── Données locales ───────────────────────────────────────────────────────────
+*.log
+*.jsonl
+*.parquet
+backup-work/
+restore-work/
+pg_archive/
+archive/
+
+# ── Build ─────────────────────────────────────────────────────────────────────
+dist/
+*.ova
+*.qcow2
+*.vmdk
+*.vmx
+packer/http/
+packer/.packer_cache/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Tests ─────────────────────────────────────────────────────────────────────
+benchmark_results.json
+reports/

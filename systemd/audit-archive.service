@@ -1,0 +1,26 @@
+[Unit]
+Description=Oracle Data Audit & Forensics — Archive Worker (run once)
+After=postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=oneshot
+User=audit
+Group=audit
+WorkingDirectory=/opt/audit-appliance
+
+ExecStart=/opt/audit-appliance/venv/bin/python -m engine.archive.run
+
+Environment=PYTHONPATH=/opt/audit-appliance/src
+EnvironmentFile=/opt/audit-appliance/config/appliance.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=audit-archive
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/audit-appliance/archive
+ReadWritePaths=/var/lib/audit-appliance/backup-work

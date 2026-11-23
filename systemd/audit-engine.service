@@ -1,0 +1,46 @@
+[Unit]
+Description=Oracle Data Audit & Forensics — Audit Engine
+Documentation=file:///opt/audit-appliance/docs/OPERATIONS.md
+After=network.target postgresql.service
+Requires=postgresql.service
+Wants=audit-api.service
+
+[Service]
+Type=exec
+User=audit
+Group=audit
+WorkingDirectory=/opt/audit-appliance
+
+# Exécutable
+ExecStart=/opt/audit-appliance/venv/bin/python -m engine.main
+
+# Redémarrage automatique
+Restart=on-failure
+RestartSec=10
+StartLimitInterval=300
+StartLimitBurst=5
+
+# Variables d'environnement
+Environment=PYTHONPATH=/opt/audit-appliance/src
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/opt/audit-appliance/config/appliance.env
+
+# Journalisation
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=audit-engine
+
+# Sécurité
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/audit-appliance
+ReadWritePaths=/opt/audit-appliance/logs
+
+# Limites
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target

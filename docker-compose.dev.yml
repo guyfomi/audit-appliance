@@ -1,0 +1,117 @@
+# =============================================================================
+# Oracle Data Audit & Forensics Appliance
+# Docker Compose — DÉVELOPPEMENT LOCAL UNIQUEMENT
+# Ne pas utiliser en production (l'appliance utilise systemd)
+# =============================================================================
+
+version: "3.9"
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgresql:
+    image: postgres:16-alpine
+    container_name: audit-postgresql
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       audit
+      POSTGRES_USER:     audit
+      POSTGRES_PASSWORD: audit_dev_password
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./src/db/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U audit -d audit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── MinIO (archive object store) ────────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: audit-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER:     minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"   # API S3
+      - "9001:9001"   # Console Web
+
+  # ── SynchDB simulé (mock pour dev) ─────────────────────────────────────────
+  synchdb-mock:
+    build:
+      context: ./tests/synchdb-mock
+      dockerfile: Dockerfile
+    container_name: audit-synchdb-mock
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      EVENTS_PER_SECOND: 10
+      DATABASE_NAME:     COREBANK
+
+  # ── Audit Engine ────────────────────────────────────────────────────────────
+  audit-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile.engine
+    container_name: audit-engine
+    restart: unless-stopped
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      synchdb-mock:
+        condition: service_started
+    env_file:
+      - config/appliance.dev.env
+    volumes:
+      - ./src:/app/src
+      - archive_data:/var/lib/audit-appliance/archive
+
+  # ── Audit API ───────────────────────────────────────────────────────────────
+  audit-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: audit-api
+    restart: unless-stopped
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    env_file:
+      - config/appliance.dev.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+
+  # ── Nginx ───────────────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: audit-nginx
+    restart: unless-stopped
+    depends_on:
+      - audit-api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/audit-appliance.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ui_dist:/usr/share/nginx/html
+
+volumes:
+  pg_data:
+  minio_data:
+  archive_data:
+  ui_dist:
+
+networks:
+  default:
+    name: audit-network

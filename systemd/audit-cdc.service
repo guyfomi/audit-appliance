@@ -1,0 +1,41 @@
+[Unit]
+Description=Oracle Data Audit & Forensics — CDC Adapter (SynchDB)
+Documentation=file:///opt/audit-appliance/docs/OPERATIONS.md
+After=network.target postgresql.service audit-engine.service
+Requires=postgresql.service audit-engine.service
+
+[Service]
+Type=exec
+User=audit
+Group=audit
+WorkingDirectory=/opt/audit-appliance
+
+ExecStart=/opt/audit-appliance/venv/bin/python -m cdc.main
+
+# Redémarrage avec délai plus long (connexion Oracle peut prendre du temps)
+Restart=on-failure
+RestartSec=15
+StartLimitInterval=600
+StartLimitBurst=5
+
+Environment=PYTHONPATH=/opt/audit-appliance/src
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/opt/audit-appliance/config/appliance.env
+# Secrets Oracle séparés
+EnvironmentFile=-/opt/audit-appliance/config/.oracle_secrets
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=audit-cdc
+
+# Sécurité
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/audit-appliance/checkpoints
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
