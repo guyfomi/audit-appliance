@@ -100,7 +100,6 @@ https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
         build-essential \
         rsync jq bc \
         awscli \
-        shred \
         netcat-openbsd \
         psmisc \
         htop \
