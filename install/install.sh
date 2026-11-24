@@ -295,8 +295,7 @@ PSQL
 run_migrations() {
     section "Création du schéma de base de données"
 
-    PGPASSFILE=/opt/audit-appliance/config/.pgpass \
-    sudo -u "${APPLIANCE_USER}" psql \
+    sudo -E -u "${APPLIANCE_USER}" PGPASSFILE=/opt/audit-appliance/config/.pgpass psql \
         -h localhost -d audit \
         -f "${APPLIANCE_HOME}/src/db/migrations/001_initial_schema.sql" \
         --quiet
