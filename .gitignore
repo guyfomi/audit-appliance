@@ -50,6 +50,9 @@ backup-work/
 restore-work/
 pg_archive/
 archive/
+.cache/
+.config/
+.copilot
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 dist/
@@ -71,3 +74,11 @@ Thumbs.db
 # ── Tests ─────────────────────────────────────────────────────────────────────
 benchmark_results.json
 reports/
+.bash_history
+.viminfo
+.local/share/pki/nssdb/pkcs11.txt
+.local/share/pki/nssdb/key4.db
+.local/share/pki/nssdb/cert9.db
+.Xauthority
+.gitconfig
+.gitignore
