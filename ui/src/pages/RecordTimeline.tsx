@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
-import {
-  Box, Paper, TextField, Button, Typography,
-  Timeline, TimelineItem, TimelineSeparator, TimelineConnector,
-  TimelineContent, TimelineDot, TimelineOppositeContent,
-  Chip, Grid, CircularProgress, Alert,
-} from '@mui/lab';
-import { Search, History } from '@mui/icons-material';
 import { useSearchParams } from 'react-router-dom';
 import { useRecordTimeline } from '../hooks';
-import { RiskBadge, OperationBadge, BeforeAfterDiff } from '../components/common';
+import { RiskBadge, OperationBadge } from '../components/common';
 import type { RiskLevel } from '../lib/types';
 
 const DOT_COLOR: Record<RiskLevel, 'error' | 'warning' | 'info' | 'success'> = {
@@ -17,6 +10,12 @@ const DOT_COLOR: Record<RiskLevel, 'error' | 'warning' | 'info' | 'success'> = {
   MEDIUM:   'info',
   LOW:      'success',
 };
+
+import {
+  Box, Paper, TextField, Button, Typography,
+  Grid, CircularProgress, Alert, Chip,
+} from '@mui/material';
+import { Search, History } from '@mui/icons-material';
 
 const RecordTimeline: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -50,21 +49,21 @@ const RecordTimeline: React.FC = () => {
         <Grid container spacing={2} alignItems="flex-end">
           <Grid item xs={12} sm={3}>
             <TextField label="Schéma" size="small" fullWidth
-              value={schema} onChange={e => setSchema(e.target.value)}
+              value={schema} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSchema(e.target.value)}
               placeholder="ex: BANK"
             />
           </Grid>
           <Grid item xs={12} sm={3}>
             <TextField label="Table" size="small" fullWidth
-              value={table} onChange={e => setTable(e.target.value)}
+              value={table} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTable(e.target.value)}
               placeholder="ex: CUSTOMER"
             />
           </Grid>
           <Grid item xs={12} sm={4}>
             <TextField label="Valeur de la clé primaire" size="small" fullWidth
-              value={pk} onChange={e => setPk(e.target.value)}
+              value={pk} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPk(e.target.value)}
               placeholder="ex: 123456"
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+              onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && handleSearch()}
             />
           </Grid>
           <Grid item xs={12} sm={2}>
@@ -89,77 +88,47 @@ const RecordTimeline: React.FC = () => {
       )}
 
       {data && data.total > 0 && (
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <History sx={{ color: 'primary.main' }} />
-            <Typography variant="subtitle1" fontWeight={600}>
-              {data.total} événement{data.total > 1 ? 's' : ''} — {submitted.schema}.{submitted.table}
-              — clé: <code>{submitted.pk}</code>
-            </Typography>
-            <Chip label={`${data.total} événements`} size="small" color="primary" />
-          </Box>
+        <Box sx={{ p: 1, borderRadius: 1, border: '1px solid #e0e0e0' }}>
+          <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
+            {data.total} événement{data.total > 1 ? 's' : ''} — {submitted.schema}.{submitted.table}
+          </Typography>
+          <Chip label={`${data.total} événements`} size="small" color="primary" sx={{ my: 1 }} />
 
-          <Timeline position="right">
-            {data.items.map((event, idx) => (
-              <TimelineItem key={event.id}>
-                <TimelineOppositeContent sx={{ flex: 0.15, py: 1.5, pr: 1 }}>
+          {data.items.map((event, idx) => (
+            <Box key={event.id} sx={{ p: 1, borderBottom: '1px solid #f0f0f0' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <OperationBadge op={event.operation} />
+                <RiskBadge level={event.risk_level} />
+                <Typography variant="caption" color="text.secondary">
+                  {new Date(event.event_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </Typography>
+              </Box>
+
+              {event.changed_columns.length > 0 ? (
+                <Typography variant="caption" color="text.secondary">
+                  {event.changed_columns.length} colonne{event.changed_columns.length > 1 ? 's' : ''} modifiées
+                </Typography>
+              ) : (
+                <Typography variant="caption" color="text.secondary">
+                  {event.operation === 'INSERT' ? 'Enregistrement créé' : 'Aucune colonne capturée'}
+                </Typography>
+              )}
+
+              <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                {event.db_username && (
                   <Typography variant="caption" color="text.secondary">
-                    {new Date(event.event_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    👤 {event.db_username}
+                    {event.app_user && event.app_user !== event.db_username && ` (${event.app_user})`}
                   </Typography>
-                </TimelineOppositeContent>
-
-                <TimelineSeparator>
-                  <TimelineDot color={DOT_COLOR[event.risk_level]}
-                               variant={event.risk_level === 'LOW' ? 'outlined' : 'filled'} />
-                  {idx < data.items.length - 1 && <TimelineConnector />}
-                </TimelineSeparator>
-
-                <TimelineContent sx={{ py: 1, px: 2, pb: 2 }}>
-                  <Paper variant="outlined" sx={{
-                    p: 1.5, borderRadius: 2,
-                    borderLeftWidth: event.risk_level !== 'LOW' ? 3 : 1,
-                    borderLeftColor: event.risk_level === 'CRITICAL' ? 'error.main'
-                                   : event.risk_level === 'HIGH'     ? 'warning.main'
-                                   : event.risk_level === 'MEDIUM'   ? 'info.main'
-                                   : 'divider',
-                  }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <OperationBadge op={event.operation} />
-                      <RiskBadge level={event.risk_level} />
-                    </Box>
-
-                    {/* Diff avant/après */}
-                    {event.changed_columns.length > 0 ? (
-                      <BeforeAfterDiff
-                        before={(event as any).before_data || {}}
-                        after={(event as any).after_data || {}}
-                        changedColumns={event.changed_columns}
-                        showAll={false}
-                      />
-                    ) : (
-                      <Typography variant="caption" color="text.secondary">
-                        {event.operation === 'INSERT' ? 'Enregistrement créé' : 'Aucune colonne capturée'}
-                      </Typography>
-                    )}
-
-                    <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-                      {event.db_username && (
-                        <Typography variant="caption" color="text.secondary">
-                          👤 {event.db_username}
-                          {event.app_user && event.app_user !== event.db_username && ` (${event.app_user})`}
-                        </Typography>
-                      )}
-                      {event.client_ip && (
-                        <Typography variant="caption" color="text.secondary">
-                          🌐 {event.client_ip}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Paper>
-                </TimelineContent>
-              </TimelineItem>
-            ))}
-          </Timeline>
+                )}
+                {event.client_ip && (
+                  <Typography variant="caption" color="text.secondary">
+                    🌐 {event.client_ip}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          ))}
         </Box>
       )}
     </Box>

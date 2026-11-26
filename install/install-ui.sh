@@ -48,7 +48,7 @@ install_dependencies() {
     cd "${UI_DIR}"
 
     info "npm install..."
-    npm ci --prefer-offline 2>&1 | tail -5 || npm install
+    npm ci --prefer-offline || npm install
     info "Dépendances installées"
 }
 

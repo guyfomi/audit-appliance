@@ -82,3 +82,6 @@ reports/
 .Xauthority
 .gitconfig
 .gitignore
+.dotnet/
+.npm/
+.sudo_as_admin_successful

@@ -189,11 +189,6 @@ const AuditExplorer: React.FC = () => {
       field: 'operation', headerName: 'Op', width: 80,
       cellRenderer: (p: { value: Operation }) => <OperationBadge op={p.value} />,
     },
-    {
-      field: 'primary_key', headerName: 'Clé primaire', width: 110,
-      valueGetter: p => JSON.stringify(p.data?.primary_key || {}),
-      cellStyle: { fontFamily: 'monospace', fontSize: 11 },
-    },
     { field: 'db_username',  headerName: 'User Oracle', width: 110 },
     { field: 'app_user',     headerName: 'User App',    width: 90 },
     { field: 'client_ip',    headerName: 'IP',          width: 120, cellStyle: { fontFamily: 'monospace', fontSize: 11 } },
