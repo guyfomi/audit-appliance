@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { jwtDecode } from 'jose';
 import { authApi } from '../lib/api';
 import type { CurrentUser, UserRole } from '../lib/types';
 
@@ -27,24 +28,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = useCallback(async (username: string, password: string) => {
     const { data } = await authApi.login(username, password);
     localStorage.setItem('token', data.access_token);
-    const tokenParts = data.access_token.split('.');
-    const payloadBase64Url = tokenParts[1];
-    const payload = JSON.parse(
-      atob(payloadBase64Url.replace(/-/g, '+').replace(/_/g, '/'))
-    );
-    const decoded: Record<string, unknown> = {
-      sub: Number(payload.sub),
-      username: payload.username,
-      role: payload.role,
-    };
+    const decoded = jwtDecode(data.access_token) as Record<string, unknown>;
     const currentUser: CurrentUser = {
-      user_id: decoded.sub as number,
+      user_id:  Number(decoded.sub),
       username: decoded.username as string,
-      role: decoded.role as UserRole,
+      role:     decoded.role as UserRole,
     };
-    localStorage.setItem('user', JSON.stringify(currentUser));
-    setToken(data.access_token);
-    setUser(currentUser);
     localStorage.setItem('user', JSON.stringify(currentUser));
     setToken(data.access_token);
     setUser(currentUser);

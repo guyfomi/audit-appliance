@@ -5,65 +5,52 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Shell } from './components/layout/Shell';
 
-// Pages (lazy loading pour de meilleures performances)
-const Login           = React.lazy(() => import('./pages/Login'));
-const Dashboard       = React.lazy(() => import('./pages/Dashboard'));
-const AuditExplorer   = React.lazy(() => import('./pages/AuditExplorer'));
-const RecordTimeline  = React.lazy(() => import('./pages/RecordTimeline'));
-const EventDetail     = React.lazy(() => import('./pages/EventDetail'));
-const Alerts          = React.lazy(() => import('./pages/Alerts'));
-const Health          = React.lazy(() => import('./pages/Health'));
+const Login              = React.lazy(() => import('./pages/Login'));
+const Dashboard          = React.lazy(() => import('./pages/Dashboard'));
+const AuditExplorer      = React.lazy(() => import('./pages/AuditExplorer'));
+const RecordTimeline     = React.lazy(() => import('./pages/RecordTimeline'));
+const TransactionExplorer = React.lazy(() => import('./pages/TransactionExplorer'));
+const Alerts             = React.lazy(() => import('./pages/Alerts'));
+const Rules              = React.lazy(() => import('./pages/Rules'));
+const Integrity          = React.lazy(() => import('./pages/Integrity'));
+const Health             = React.lazy(() => import('./pages/Health'));
+const Users              = React.lazy(() => import('./pages/Users'));
+const Reports            = React.lazy(() => import('./pages/Reports'));
 
-// Placeholders pour les pages non encore implémentées
-const Placeholder: React.FC<{ title: string }> = ({ title }) => (
+const Placeholder: React.FC<{ title: string; description?: string }> = ({ title, description }) => (
   <div style={{ padding: 32 }}>
-    <h2>{title}</h2>
-    <p style={{ color: '#666' }}>Cette page est en cours de développement.</p>
+    <h2 style={{ marginBottom: 8 }}>{title}</h2>
+    <p style={{ color: '#666' }}>{description || 'Disponible dans la prochaine version.'}</p>
   </div>
 );
 
-// ── React Query client ────────────────────────────────────────────────────────
-
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry:              1,
-      refetchOnWindowFocus: false,
-      staleTime:          10_000,
-    },
-  },
+  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 10_000 } },
 });
-
-// ── Thème MUI ─────────────────────────────────────────────────────────────────
 
 const theme = createTheme({
   palette: {
-    primary:   { main: '#1565C0' },
-    secondary: { main: '#E65100' },
-    error:     { main: '#B71C1C' },
-    warning:   { main: '#E65100' },
-    success:   { main: '#2E7D32' },
-    background: {
-      default: '#F5F7FA',
-      paper:   '#FFFFFF',
-    },
+    primary:    { main: '#1565C0' },
+    secondary:  { main: '#E65100' },
+    error:      { main: '#B71C1C' },
+    warning:    { main: '#E65100' },
+    success:    { main: '#2E7D32' },
+    info:       { main: '#0277BD' },
+    background: { default: '#F5F7FA', paper: '#FFFFFF' },
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h4: { fontWeight: 700 },
-    h5: { fontWeight: 700 },
-    h6: { fontWeight: 600 },
+    h4: { fontWeight: 700 }, h5: { fontWeight: 700 }, h6: { fontWeight: 600 },
+    subtitle1: { fontWeight: 600 }, subtitle2: { fontWeight: 600 },
   },
   shape: { borderRadius: 8 },
   components: {
-    MuiPaper:  { defaultProps: { elevation: 0 }, styleOverrides: { root: { backgroundImage: 'none' } } },
-    MuiButton: { defaultProps: { disableElevation: true } },
-    MuiChip:   { styleOverrides: { root: { fontWeight: 500 } } },
-    MuiTableCell: { styleOverrides: { head: { fontWeight: 600, backgroundColor: '#F5F7FA' } } },
+    MuiPaper:     { defaultProps: { elevation: 0 }, styleOverrides: { root: { backgroundImage: 'none' } } },
+    MuiButton:    { defaultProps: { disableElevation: true } },
+    MuiChip:      { styleOverrides: { root: { fontWeight: 500 } } },
+    MuiTableCell: { styleOverrides: { head: { fontWeight: 600, backgroundColor: '#F5F7FA', borderBottom: '2px solid #E0E0E0' } } },
   },
 });
-
-// ── Route protégée ────────────────────────────────────────────────────────────
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token } = useAuth();
@@ -71,35 +58,34 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// ── App principale ────────────────────────────────────────────────────────────
+const Loader: React.FC = () => (
+  <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', flexDirection:'column', gap:16, color:'#666' }}>
+    <div style={{ width:36, height:36, border:'3px solid #E0E0E0', borderTopColor:'#1565C0', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
+    <span style={{ fontSize:14 }}>Chargement…</span>
+    <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+  </div>
+);
 
 const AppRoutes: React.FC = () => (
-  <React.Suspense fallback={
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-      <div>Chargement…</div>
-    </div>
-  }>
+  <React.Suspense fallback={<Loader />}>
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/" element={
-        <ProtectedRoute><Shell /></ProtectedRoute>
-      }>
+      <Route path="/" element={<ProtectedRoute><Shell /></ProtectedRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard"    element={<Dashboard />} />
         <Route path="explorer"     element={<AuditExplorer />} />
         <Route path="timeline"     element={<RecordTimeline />} />
-        <Route path="transactions" element={<Placeholder title="Transaction Explorer" />} />
+        <Route path="transactions" element={<TransactionExplorer />} />
         <Route path="alerts"       element={<Alerts />} />
-        <Route path="rules"        element={<Placeholder title="Règles de risque" />} />
-        <Route path="databases"    element={<Placeholder title="Bases de données" />} />
-        <Route path="integrity"    element={<Placeholder title="Intégrité SHA-256" />} />
-        <Route path="archive"      element={<Placeholder title="Archive" />} />
+        <Route path="rules"        element={<Rules />} />
+        <Route path="databases"    element={<Placeholder title="Bases de données Oracle" description="Configurer les bases Oracle, tables, colonnes et politiques de masquage." />} />
+        <Route path="integrity"    element={<Integrity />} />
+        <Route path="archive"      element={<Placeholder title="Archive" description="Jobs d'archivage Parquet/JSONL, vérification hash, archivage manuel." />} />
         <Route path="health"       element={<Health />} />
-        <Route path="reports"      element={<Placeholder title="Rapports" />} />
-        <Route path="users"        element={<Placeholder title="Utilisateurs" />} />
-        <Route path="backup"       element={<Placeholder title="Backup / Restore" />} />
-        <Route path="admin"        element={<Placeholder title="Administration" />} />
-        <Route path="events/:id"   element={<Placeholder title="Détail événement" />} />
+        <Route path="reports"      element={<Reports />} />
+        <Route path="users"        element={<Users />} />
+        <Route path="backup"       element={<Placeholder title="Backup / Restore" description="Backup manuel, historique, restauration." />} />
+        <Route path="admin"        element={<Placeholder title="Administration" description="Configuration générale, rétention, alertes, intégrations SIEM." />} />
         <Route path="*"            element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>
